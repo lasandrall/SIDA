@@ -1,0 +1,19 @@
+Package: SIDA
+Type: Package
+Title: Sparse Integrative Discriminant Analysis for Multi-view Structured Data
+Version: 1.0
+Author: Sandra E. Safo
+Maintainer: Sandra E. Safo <ssafo@umn.edu>
+Url: https://www.sandraesafo.com/software
+Description: The SIDA package implements the SIDA and SIDANet algorithms for joint association and classification studies.  The algorithms consider the overall association between 
+    multi-view data, and the separation within each view when choosing discriminant vectors 
+    that are associated and optimally separate subjects. SIDANet incorporates prior structural information in joint association and classification studies. 
+    It uses the normalized Laplacian of a graph to smooth coefficients of predictor variables, thus encouraging selection of predictors that are connected and
+    behave similarly.
+License: GPL (>=2.0)
+Imports: CVXR, doParallel, foreach, RSpectra,igraph, Matrix
+Encoding: UTF-8
+LazyData: true
+NeedsCompilation: no
+Packaged: 2020-05-12 03:42:45 UTC; thierrychekouotekougang
+Depends: R (>= 3.4.0)
