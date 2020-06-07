@@ -7,7 +7,7 @@ Correlation Plots
 Plots for visualizing correlation between estimated discriminant vectors for pairwise data.
 }
 \usage{
-CorrelationPlots(Xtestdata,Ytest,hatalpha)
+CorrelationPlots(Xtestdata=Xtestdata,Ytest=Ytest,hatalpha=hatalpha)
 }
 
 \arguments{

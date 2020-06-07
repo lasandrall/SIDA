@@ -7,9 +7,11 @@ Sparse Integrative Discriminant Analysis for Multi-view Structured (Network) Dat
 Performs sparse integrative disdcriminant analysis of multi-view structured (network) data  to 1) obtain discriminant vectors that are associated and optimally separate subjects into different classes 2) estimate misclassification rate, and total correlation coefficient. The Laplacian of the underlying graph is used to smooth the discriminant vectors to encourage variables within a view that are connected to have a similar effect. Allows for the inclusion of other covariates which are not penalized in the algorithm. It is recommended to use cvSIDANet to choose best tuning parameter.
 }
 \usage{
-sidanet(Xdata,Y,myedges,myedgeweight,Tau,withCov=FALSE,Xtestdata=NULL,Ytest=NULL,
-    AssignClassMethod='Joint',plotIt=FALSE, standardize=TRUE,
-    maxiteration=20,weight=0.5,thresh= 1e-03,eta=0.5,mynormLaplacianG=NULL)
+sidanet(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,
+        Tau=Tau,withCov=FALSE,Xtestdata=NULL,Ytest=NULL,
+        AssignClassMethod='Joint',plotIt=FALSE, standardize=TRUE,
+        maxiteration=20,weight=0.5,thresh= 1e-03,eta=0.5,
+        mynormLaplacianG=NULL)
 }
 
 \arguments{

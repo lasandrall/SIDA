@@ -8,7 +8,7 @@ Peforms nfolds cross validation  to select optimal tuning parameters for sida ba
  to predict class membership. Allows for inclusion of covariates which are not penalized. If you want to apply optimal tuning parameters to testing data, you may also use sida.
 }
 \usage{
-cvSIDA(Xdata,Y,withCov=FALSE,plotIt=FALSE, Xtestdata=NULL,Ytest=NULL,
+cvSIDA(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE, Xtestdata=NULL,Ytest=NULL,
         isParallel=TRUE, ncores=NULL,gridMethod='RandomSearch',
         AssignClassMethod='Joint',nfolds=5,ngrid=8,standardize=TRUE,
         maxiteration=20,weight=0.5,thresh=1e-03)
@@ -49,7 +49,7 @@ GridSearch or RandomSearch. Optimize tuning parameters over full grid or random 
   Number of cross validation folds. Default is 5.
 }
 \item{ngrid}{
-   Number of grid points for tuning parameters. Default is 10 for each view if \eqn{D=2}. If \eqn{D>2}, default is 8.
+   Number of grid points for tuning parameters. Default is 8 for each view if \eqn{D=2}. If \eqn{D>2}, default is 5.
 }
  \item{standardize}{
  TRUE or FALSE. If TRUE, data will be normalized to have mean zero  and variance one for each variable. Default is TRUE.

@@ -7,7 +7,7 @@ Tuning paramter grid values for sida
 Sida function to provide tuning parameter grid values for each view, not including covariates, if available. It is recommended to use this to get lower and upper bounds of tuning parameters for each view that can be used in sida. This function is called by cvSIDA to select optimal tuning parameters.
 }
 \usage{
-sidatunerange(Xdata,Y,ngrid,standardize=TRUE,weight=0.5,withCov=FALSE)
+sidatunerange(Xdata=Xdata,Y=Y,ngrid=8,standardize=TRUE,weight=0.5,withCov=FALSE)
 }
 \arguments{
   \item{Xdata}{

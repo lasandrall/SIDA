@@ -7,7 +7,7 @@ Discriminant Plots
 Plots discriminant vectors for visualizing class separation
 }
 \usage{
-DiscriminantPlots(Xtestdata,Ytest,hatalpha)
+DiscriminantPlots(Xtestdata=Xtestdata,Ytest=Ytest,hatalpha=hatalpha)
 }
 
 \arguments{

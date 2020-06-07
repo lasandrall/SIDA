@@ -7,7 +7,8 @@ Classification approach for Sparse Integrative Discriminant Analysis
 Performs classification using nearest centroid on separate or combined estimated discriminant vectors, and predicts class membership.
 }
 \usage{
-sidaclassify(hatalpha,Xtestdata,Xdata,Y,AssignClassMethod='Joint', standardize=TRUE)
+sidaclassify(hatalpha=hatalpha,Xtestdata=Xtestdata,Xdata=Xdata,Y=Y,
+            AssignClassMethod='Joint', standardize=TRUE)
 }
 \arguments{
 	\item{hatalpha}{ A list of estimated sparse discriminant vectors for each view. This may be obtained from sida or cvSIDA }

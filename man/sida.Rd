@@ -7,7 +7,7 @@ Sparse Integrative Discriminant Analysis for Multi-view Data
 Performs sparse integrative disdcriminant analysis of multi-view data  to 1) obtain discriminant vectors that are associated and optimally separate subjects into different classes 2) estimate misclassification rate, and total correlation coefficient. Allows for the inclusion of other covariates which are not penalized in the algorithm. It is recommended to use cvSIDA to choose best tuning parameter.
 }
 \usage{
-sida(Xdata,Y,Tau,withCov=FALSE,Xtestdata=Xtestdata,Ytest=Ytest,
+sida(Xdata=Xdata,Y=Y,Tau=Tau,withCov=FALSE,Xtestdata=Xtestdata,Ytest=Ytest,
     AssignClassMethod='Joint',plotIt=FALSE, standardize=TRUE,
     maxiteration=20,weight=0.5,thresh= 1e-03)
 }

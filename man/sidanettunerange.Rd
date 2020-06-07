@@ -7,8 +7,8 @@ Tuning paramter grid values for sidanet
 Sidanet function to provide tuning parameter grid values for each view, not including covariates, if available. It is recommended to use this to get lower and upper bounds of tuning parameters for each view that can be used in sidanet. This function is called by cvSIDANet to select optimal tuning parameters.
 }
 \usage{
-sidanettunerange(Xdata,Y,ngrid,standardize=TRUE,weight=0.5,eta=0.5,
-                myedges,myedgeweight,withCov=FALSE)
+sidanettunerange(Xdata=Xdata,Y=Y,ngrid=8,standardize=TRUE,weight=0.5,eta=0.5,
+                myedges=myedges,myedgeweight=myedgeweight,withCov=FALSE)
 }
 \arguments{
   \item{Xdata}{
