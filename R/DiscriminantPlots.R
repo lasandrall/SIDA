@@ -1,4 +1,4 @@
-DiscriminantPlots=function(Xtestdata,Ytest,hatalpha){
+DiscriminantPlots=function(Xtestdata=Xtestdata,Ytest=Ytest,hatalpha=hatalpha){
 
 
   dsizes=lapply(Xtestdata, function(x) dim(x))

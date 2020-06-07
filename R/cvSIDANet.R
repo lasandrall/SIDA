@@ -1,4 +1,4 @@
-cvSIDANet=function(Xdata,Y,myedges,myedgeweight,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isParallel=TRUE,ncores=NULL,gridMethod='RandomSearch',AssignClassMethod='Joint',nfolds=5,ngrid=8,standardize=TRUE,maxiteration=20, weight=0.5,thresh=1e-03,eta=0.5){
+cvSIDANet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isParallel=TRUE,ncores=NULL,gridMethod='RandomSearch',AssignClassMethod='Joint',nfolds=5,ngrid=8,standardize=TRUE,maxiteration=20, weight=0.5,thresh=1e-03,eta=0.5){
 
 
   #check data
@@ -48,11 +48,60 @@ cvSIDANet=function(Xdata,Y,myedges,myedgeweight,withCov=FALSE,plotIt=FALSE,Xtest
     stop("Input data should be a list")
   }
 
+  if(is.null(withCov)){
+    withCov=FALSE
+  }
+  
+  if(is.null(plotIt)){
+    plotIt=FALSE
+  }
+  
+  if(is.null(standardize)){
+    standardize=TRUE
+  }
+  
   #standardize if true
   if(standardize==TRUE){
     Xdata=lapply(Xdata,function(x)scale(x,center=TRUE,scale=TRUE))
     Xtestdata=lapply(Xtestdata,function(x)scale(x,center=TRUE,scale=TRUE))
   }
+  
+  if(is.null(gridMethod)){
+    gridMethod='RandomSearch'
+  }
+  
+  if(is.null(AssignClassMethod)){
+    AssignClassMethod='Joint'
+  }
+  
+  if(is.null(isParallel)){
+    isParallel=TRUE
+  }
+  
+  if(is.null(nfolds)){
+    nfolds=5
+  }
+  
+  if(is.null(ngrid)){
+    ngrid=8
+  }
+  
+  if(is.null(maxiteration)){
+    maxiteration=20
+  }
+  
+  if(is.null(weight)){
+    weight=0.5
+  }
+  
+  if(is.null(thresh)){
+    thresh=1e-03
+  }
+  
+  if(is.null(eta)){
+    eta=1e-03
+  }
+  
 
   set.seed(1234)
   nK=length(unique(as.vector(Y))) -1
@@ -88,7 +137,7 @@ cvSIDANet=function(Xdata,Y,myedges,myedgeweight,withCov=FALSE,plotIt=FALSE,Xtest
 
   #calculate the normalized laplacian
   mynormLaplacianG=myNLaplacianG(Xdata,myedges,myedgeweight)
-  myTauvec=sidanettunerange(Xdata,Y,ngrid,standardize=TRUE,weight=0.5,eta=0.5,myedges,myedgeweight,withCov)
+  myTauvec=sidanettunerange(Xdata,Y,ngrid,standardize,weight,eta,myedges,myedgeweight,withCov)
 
   #define the grid
   mygrid=expand.grid(do.call(cbind,myTauvec))
@@ -118,7 +167,7 @@ if(isParallel==TRUE){
   #start_time=Sys.time()
   registerDoParallel(cl)
   CVOut=matrix(0, nrow(gridValues), nfolds)
-  mycv=foreach(i = 1:nrow(gridValues), .combine='rbind',.export=c('sidanet','sidanetinner','myfastinner','myfastIDAnonsparse','mysqrtminv','sidaclassify', 'sidanettunerange'),.packages=c('CVXR','RSpectra','igraph','Matrix')) %dopar% {
+  mycv=foreach(i = 1:nrow(gridValues), .combine='rbind',.export=c('sidanet','sidanetinner','myfastinner','myfastIDAnonsparse','mysqrtminv','sidaclassify', 'sidanettunerange','DiscriminantPlots','CorrelationPlots'),.packages=c('CVXR','RSpectra','igraph','Matrix')) %dopar% {
     mTau=sapply(1:D, function(itau) list(t(gridValues[,itau][i])))
     start_time=Sys.time()
     CVOut[i,]= sapply(1:nfolds, function(j){

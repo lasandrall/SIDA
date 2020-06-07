@@ -224,7 +224,7 @@ mysqrtminv=function(W){
   return(result)
 }
 
-sidainner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,weight=0.5,withCov=FALSE){
+sidainner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,weight,withCov){
 
 
   #check data
@@ -276,7 +276,7 @@ sidainner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,wei
 }
 
 
-sidanetinner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,weight=0.5,eta=0.5,myedges,myedgeweight,mynormLaplacianG=NULL,withCov=FALSE){
+sidanetinner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,weight,eta,myedges,myedgeweight,mynormLaplacianG=NULL,withCov){
 
   #check data
   if (is.list(Xdata)) {
@@ -310,27 +310,11 @@ sidanetinner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,
     #utilizes sida;
     ee=c(as.matrix((myedges[[d]]!=0)*1))
     if(max(ee)==1){
-      # edgesd=as.matrix(myedges[[d]])
-      # edgeNode=unique(c(as.matrix(edgesd)))
-      # edgeweightd=myedgeweight[[d]]
-      # 
-      # #create undirected graph from edge list
-      # G=graph_from_edgelist(edgesd, directed=FALSE)
-      # L2=Matrix(0, nrow=p,ncol=p,sparse=TRUE)
-      # 
-      # #calculate normalized laplacian of the weighted or unweighted graph
-      # if(max(edgeweightd)!=0){
-      #   nL=laplacian_matrix(G, normalized=TRUE, weights=edgeweightd, sparse=igraph_opt("sparsematrices"))
-      # }else if(max(edgeweightd)==0){
-      #   nL=laplacian_matrix(G, normalized=TRUE, weights=NULL,sparse=igraph_opt("sparsematrices"))
-      # }
-      # L2[edgeNode,edgeNode]=nL
-      # myL[[d]]=Matrix(L2,sparse = TRUE)
       L2=mynormLaplacianG[[d]]
       #solve for SIDANet directions
       Alphai=Variable(p,nK)
       LB=as.matrix(L2)%*%Alphai
-      Objx=eta%*%sum(norm2(LB,axis=1)) + (1-eta)%*%sum(norm2(Alphai,axis=1))
+      Objx=eta%*%sum(norm2(LB,axis=1)) +(1-eta)%*%sum(norm2(Alphai,axis=1))
 
       #defining the constraints
       constraints=list(norm_inf(sum_entries(abs(as.matrix(myfastnslda$SepAndAssocd[[d]]) - Alphai%*%as.matrix(diag(tildelambda[[d]],nrow=length(tildelambda[[d]])))), axis=1 ))<= Tau[[d]])
@@ -339,8 +323,7 @@ sidanetinner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,
       alphai=result$getValue(Alphai)
       alphai[abs(alphai) <=10^-5]=0
     }else if(max(myedges[[d]])==0){
-      #myL[[d]]=Matrix(diag(rep(1,p)))
-      #if edge information is not available, use SIDA
+       #if edge information is not available, use SIDA
       #solve for SIDANet directions
       Alphai=Variable(p,nK)
       Objx=sum(norm2(Alphai,axis=1))

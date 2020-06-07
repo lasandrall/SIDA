@@ -1,4 +1,4 @@
-sida=function(Xdata,Y,Tau,withCov=FALSE,Xtestdata=Xtestdata,Ytest=Ytest,AssignClassMethod='Joint',plotIt=FALSE,standardize=TRUE,maxiteration=20,weight=0.5,thresh= 1e-03){
+sida=function(Xdata=Xdata,Y=Y,Tau=Tau,withCov=FALSE,Xtestdata=Xtestdata,Ytest=Ytest,AssignClassMethod='Joint',plotIt=FALSE,standardize=TRUE,maxiteration=20,weight=0.5,thresh= 1e-03){
 
 
   #check inputs
@@ -22,7 +22,36 @@ sida=function(Xdata,Y,Tau,withCov=FALSE,Xtestdata=Xtestdata,Ytest=Ytest,AssignCl
    Xtestdata=Xdata
    Ytest=Y
  }
+  
+  if(is.null(AssignClassMethod)){
+    AssignClassMethod='Joint'
+  }
 
+  if(is.null(withCov)){
+    withCov=FALSE
+  }
+  
+  if(is.null(plotIt)){
+    plotIt=FALSE
+  }
+  
+  if(is.null(standardize)){
+    standardize=TRUE
+  }
+  
+  if(is.null(maxiteration)){
+    maxiteration=20
+  }
+  
+  if(is.null(weight)){
+    weight=0.5
+  }
+  
+  if(is.null(thresh)){
+    thresh=1e-03
+  }
+  
+  
   #standardize if true
   if(standardize==TRUE){
     Xdata=lapply(Xdata,function(x)scale(x,center=TRUE,scale=TRUE))
@@ -50,7 +79,7 @@ sida=function(Xdata,Y,Tau,withCov=FALSE,Xtestdata=Xtestdata,Ytest=Ytest,AssignCl
     #cat("current iteration is", iter, "\n")
 
     myalphaold=myalpha
-    mysidainner=sidainner(Xdata,Y,mynsparse$sqrtminvmat,myalphaold,mynsparse$tildealphamat, mynsparse$tildelambda,Tau,weight=0.5,withCov)
+    mysidainner=sidainner(Xdata,Y,mynsparse$sqrtminvmat,myalphaold,mynsparse$tildealphamat, mynsparse$tildelambda,Tau,weight,withCov)
 
     myalpha=mysidainner$hatalpha
     nz=sapply(1:D, function(i) list(colSums(myalpha[[i]]!=0)))

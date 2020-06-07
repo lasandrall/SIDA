@@ -1,4 +1,4 @@
-sidatunerange=function(Xdata,Y,ngrid,standardize=TRUE,weight=0.5,withCov=FALSE){
+sidatunerange=function(Xdata=Xdata,Y=Y,ngrid=8,standardize=TRUE,weight=0.5,withCov=FALSE){
 
 #check size of each data
 
@@ -6,6 +6,22 @@ dsizes=lapply(Xdata, function(x) dim(x))
 n=dsizes[[1]][1]
 p=lapply(Xdata, function(x) dim(x)[2])
 D=length(dsizes)
+
+if(is.null(withCov)){
+   withCov=FALSE
+}
+
+if(is.null(ngrid)){
+   ngrid=8
+}
+
+if(is.null(standardize)){
+   standardize=TRUE
+}
+
+if(is.null(weight)){
+   weight=0.5
+}
 
 if(withCov==TRUE){
   D=D-1
@@ -44,7 +60,7 @@ myperx=lapply(Taugrid, function(x) quantile(x[1:ngrid], c(.1, .15, .2, .25, .35,
 myperx2=do.call(rbind,myperx)
  for(loc in 1:6){
    mTaux=sapply(1:D, function(i) list(t(myperx2[i,loc])))
-   myres=sidainner(Xdata,Y,mynsparse$sqrtminvmat,mynsparse$myalphaoldmat,mynsparse$tildealphamat, mynsparse$tildelambda,mTaux,weight=0.5,withCov)
+   myres=sidainner(Xdata,Y,mynsparse$sqrtminvmat,mynsparse$myalphaoldmat,mynsparse$tildealphamat, mynsparse$tildelambda,mTaux,weight,withCov)
    nnz=sapply(1:D, function(i) list(colSums(myres$hatalpha[[i]]!=0)/dsizes[[i]][2]))
    nnz=cbind(c(do.call(rbind,nnz)))
    if(all(nnz<=0.25)){

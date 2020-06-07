@@ -1,4 +1,4 @@
-CorrelationPlots=function(Xtestdata,Ytest,hatalpha){
+CorrelationPlots=function(Xtestdata=Xtestdata,Ytest=Ytest,hatalpha=hatalpha){
 
 dsizes=lapply(Xtestdata, function(x) dim(x))
 D=length(dsizes)
@@ -35,7 +35,7 @@ for(d in 1:dim(mycomb)[1]){
 
   plot(Scores[,1], Scores[,2],col=mycol,lwd=3,pch=mypch
        ,xlab=paste(
-         "First Discriminant Score for View", dd[1]),ylab=paste("Second Discriminant Score for View", dd[2]),xaxt="n",
+         "First Discriminant Score for View", dd[1]),ylab=paste("First Discriminant Score for View", dd[2]),xaxt="n",
        yaxt="n", main=paste("Correlation plot for views",dd[1], "and" ,dd[2], ",", "\u03C1 =", RVCoeff))
   legend("topleft",bty = "n",cex=0.8,legend=c(nc) ,col = 1:max(nc), pch=1:max(nc),title="Class")
 }

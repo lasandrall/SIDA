@@ -1,4 +1,4 @@
-cvSIDA=function(Xdata,Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isParallel=TRUE,ncores=NULL,gridMethod='RandomSearch',AssignClassMethod='Joint',nfolds=5,ngrid=8,standardize=TRUE,maxiteration=20, weight=0.5,thresh=1e-03){
+cvSIDA=function(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isParallel=TRUE,ncores=NULL,gridMethod='RandomSearch',AssignClassMethod='Joint',nfolds=5,ngrid=8,standardize=TRUE,maxiteration=20, weight=0.5,thresh=1e-03){
 
   #check inputs for training data
   dsizes=lapply(Xdata, function(x) dim(x))
@@ -121,7 +121,7 @@ cvSIDA=function(Xdata,Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isP
     ngrid=5
   }
 
-  myTauvec=sidatunerange(Xdata,Y,ngrid,standardize=TRUE,weight=0.5,withCov)
+  myTauvec=sidatunerange(Xdata,Y,ngrid,standardize,weight,withCov)
 
   #define the grid
   mygrid=expand.grid(do.call(cbind,myTauvec))
@@ -150,7 +150,7 @@ cvSIDA=function(Xdata,Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isP
        cl=makeCluster(ncores)
        registerDoParallel(cl)
     CVOut=matrix(0, nrow(gridValues), nfolds)
-    mycv=foreach(i = 1:nrow(gridValues), .combine='rbind',.export=c('sida','sidainner','myfastinner','myfastIDAnonsparse','mysqrtminv','sidaclassify', 'sidatunerange'),.packages=c('CVXR','RSpectra')) %dopar% {
+    mycv=foreach(i = 1:nrow(gridValues), .combine='rbind',.export=c('sida','sidainner','myfastinner','myfastIDAnonsparse','mysqrtminv','sidaclassify', 'sidatunerange','DiscriminantPlots','CorrelationPlots'),.packages=c('CVXR','RSpectra')) %dopar% {
       mTau=sapply(1:D, function(itau) list(t(gridValues[,itau][i])))
       #cat("Begin CV-fold", i, "\n")
       CVOut[i,]= sapply(1:nfolds, function(j){
@@ -159,7 +159,7 @@ cvSIDA=function(Xdata,Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isP
         testY=Y[testInd]
         trainX=lapply(Xdata, function(x) x[-testInd,])
         trainY=Y[-testInd]
-        mysida=sida(trainX,trainY,mTau,withCov,Xtestdata=testX,testY,AssignClassMethod='Joint',standardize=TRUE,maxiteration=20,weight=0.5,thresh= 1e-03)
+        mysida=sida(trainX,trainY,mTau,withCov,Xtestdata=testX,testY,AssignClassMethod='Joint',standardize,maxiteration,weight,thresh)
         return(min(mysida$sidaerror))
       } )
     }
@@ -177,7 +177,7 @@ cvSIDA=function(Xdata,Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isP
       cat("Begin CV-fold", i, "\n")
       CVOut[i,]= sapply(1:nrow(gridValues), function(itau){
         mTau=sapply(1:D, function(d) list(t(gridValues[itau,][d])))
-        mysida=sida(trainX,trainY,mTau,withCov,Xtestdata=testX,testY,AssignClassMethod='Joint',standardize=TRUE,maxiteration=20,weight=0.5,thresh= 1e-03)
+        mysida=sida(trainX,trainY,mTau,withCov,Xtestdata=testX,testY,AssignClassMethod='Joint',standardize,maxiteration,weight,thresh)
 
         return(min(mysida$sidaerror))
       } )
@@ -191,7 +191,7 @@ cvSIDA=function(Xdata,Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isP
 
   #Apply on testing data
   moptTau=sapply(1:D, function(i) list(t(gridValues[minEorrInd,][i])))
-  mysida=sida(Xdata=Xdata,Y=Y,Tau=moptTau,withCov,Xtestdata=Xtestdata,Ytest=Ytest,AssignClassMethod='Joint',standardize=TRUE,maxiteration=20,weight=0.5,thresh= 1e-03)
+  mysida=sida(Xdata=Xdata,Y=Y,Tau=moptTau,withCov,Xtestdata=Xtestdata,Ytest=Ytest,AssignClassMethod='Joint',standardize,maxiteration,weight,thresh)
 
 
   ss=list()

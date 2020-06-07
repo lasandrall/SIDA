@@ -1,4 +1,4 @@
-sidanet=function(Xdata,Y,myedges,myedgeweight,Tau,withCov=FALSE,Xtestdata=NULL,Ytest=NULL,AssignClassMethod='Joint',plotIt=FALSE,standardize=TRUE,maxiteration=20,weight=0.5,thresh= 1e-03,eta=0.5,mynormLaplacianG=NULL){
+sidanet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,Tau=Tau,withCov=FALSE,Xtestdata=NULL,Ytest=NULL,AssignClassMethod='Joint',plotIt=FALSE,standardize=TRUE,maxiteration=20,weight=0.5,thresh= 1e-03,eta=0.5,mynormLaplacianG=NULL){
 
 
   #check inputs640
@@ -31,6 +31,10 @@ sidanet=function(Xdata,Y,myedges,myedgeweight,Tau,withCov=FALSE,Xtestdata=NULL,Y
     Ytest=Y
   }
   
+  if(is.null(AssignClassMethod)){
+    AssignClassMethod='Joint'
+  }
+  
   if(is.null(withCov)){
     withCov=FALSE
   }
@@ -59,6 +63,10 @@ sidanet=function(Xdata,Y,myedges,myedgeweight,Tau,withCov=FALSE,Xtestdata=NULL,Y
     mynormLaplacianG=myNLaplacianG(Xdata,myedges,myedgeweight)
   }
   
+  if(is.null(eta)){
+    eta=1e-03
+  }
+  
  #standardize if true
   if(standardize==TRUE){
     Xdata=lapply(Xdata,function(x)scale(x,center=TRUE,scale=TRUE))
@@ -84,7 +92,6 @@ sidanet=function(Xdata,Y,myedges,myedgeweight,Tau,withCov=FALSE,Xtestdata=NULL,Y
   #while convergence is not met
   while(iter < maxiteration && min(min(reldiff,relObj),max(diffalpha))> thresh){
     iter=iter+1
-    print(iter)
     myalphaold=myalpha
     mysidainner=sidanetinner(Xdata,Y,mynsparse$sqrtminvmat,myalphaold,mynsparse$tildealphamat, mynsparse$tildelambda,Tau,weight,eta,myedges,myedgeweight,mynormLaplacianG,withCov)
     
@@ -102,9 +109,6 @@ sidanet=function(Xdata,Y,myedges,myedgeweight,Tau,withCov=FALSE,Xtestdata=NULL,Y
     ObjNew=sum(sapply(1:D, function(d) (1-eta)*norm(myalpha[[d]],'f')^2 + eta*norm(as.matrix(mysidainner$myL[[d]])%*%myalpha[[d]],'f')^2))
     ObjOld=sum(sapply(1:D, function(d) (1-eta)*norm(myalphaold[[d]],'f')^2 + eta*norm(as.matrix(mysidainner$myL[[d]])%*%myalphaold[[d]],'f')^2))
     relObj=abs(ObjNew-ObjOld)/ObjOld
-    print(reldiff)
-    print(diffalpha)
-    print(relObj)
   }
 
   #classification

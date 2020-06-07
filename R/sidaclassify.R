@@ -1,8 +1,15 @@
-sidaclassify=function(hatalpha,Xtestdata,Xdata,Y,AssignClassMethod='Joint', standardize=TRUE){
+sidaclassify=function(hatalpha=hatalpha,Xtestdata=Xtestdata,Xdata=Xdata,Y=Y,AssignClassMethod='Joint', standardize=TRUE){
 
 #hatalpha is a list of d estimated SIDA vectors, for each view
 #Y is a vector of training observations
-
+  if(is.null(AssignClassMethod)){
+    AssignClassMethod='Joint'
+  }
+  
+  if(is.null(standardize)){
+    standardize=TRUE
+  }
+  
   #standardize if true
   if(standardize==TRUE){
     Xdata=lapply(Xdata,function(x)scale(x,center=TRUE,scale=TRUE))
