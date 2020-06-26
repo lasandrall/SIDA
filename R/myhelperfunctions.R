@@ -58,7 +58,8 @@ myfastIDAnonsparse=function(Xdata, Y,weight){
     C=as.matrix(do.call(rbind,C))
     Swrx=t(C)%*%C /(n-1)
 
-    Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
+    #Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
+    Crx=R-rowMeans(R)
     Srx=Crx%*%t(Crx)/(n-1)
 
     Sbrx=Srx-Swrx
@@ -165,7 +166,8 @@ myfastinner = function(Xdata,Y,sqrtminv,myalphaoldmat,tildealphamat, weight=0.5)
     C=as.matrix(do.call(rbind,C))
     Swrx=t(C)%*%C /(n-1)
 
-    Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
+    #Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
+    Crx=R-rowMeans(R)
     Srx=Crx%*%t(Crx)/(n-1)
 
     Sbrx=Srx-Swrx
@@ -383,3 +385,4 @@ myNLaplacianG=function(Xdata,myedges,myedgeweight){
   }
   return(myL)
 }
+
