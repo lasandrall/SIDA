@@ -265,8 +265,8 @@ sidainner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,wei
     if(sum(sum(abs(alphai)))==0){
       hatalpha=alphai
     } else {
-      hatalpha=alphai/matrix(rep(t(sqrt(colSums(alphai*alphai))),times=p),ncol=ncol(alphai),byrow=TRUE)
-      Q1 = qr(hatalpha)
+      #hatalpha=alphai/matrix(rep(t(sqrt(colSums(alphai*alphai))),times=p),ncol=ncol(alphai),byrow=TRUE)
+      Q1 = qr(alphai)
       hatalpha=qr.Q(Q1)
       hatalpha[abs(hatalpha) <=10^-5]=0
     }
@@ -344,8 +344,8 @@ sidanetinner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,
     if(sum(sum(abs(alphai)))==0){
       hatalpha=alphai
     } else {
-      hatalpha=alphai/matrix(rep(t(sqrt(colSums(alphai*alphai))),times=p),ncol=ncol(alphai),byrow=TRUE)
-      Q1 = qr(hatalpha)
+      #hatalpha=alphai/matrix(rep(t(sqrt(colSums(alphai*alphai))),times=p),ncol=ncol(alphai),byrow=TRUE)
+      Q1 = qr(alphai)
       hatalpha=qr.Q(Q1)
       hatalpha[abs(hatalpha) <=10^-5]=0
     }
