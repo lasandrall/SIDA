@@ -40,7 +40,7 @@ if(standardize==TRUE){
 }
 
 #create normalized Laplacian of Graph
-mynormLaplacianG=myNLaplacianG(Xdata,myedges,myedgeweight)
+mynormLaplacianG=myNLaplacianG(Xdata=Xdata,myedges=myedges,myedgeweight=myedgeweight)
 #obtain nonsparse solutions
 mynsparse=myfastIDAnonsparse(Xdata,Y,weight)
 myfinner=myfastinner(Xdata,Y,mynsparse$sqrtminvmat,mynsparse$myalphaoldmat,mynsparse$tildealphamat, weight)
@@ -80,4 +80,5 @@ Tauvec=sapply(1:D, function(x) list(Tauvec[[x]][1:ngrid]))
 result=list(Tauvec=Tauvec)
 return(result)
 }
+
 

@@ -136,16 +136,18 @@ cvSIDANet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,wit
   }
 
   #calculate the normalized laplacian
-  mynormLaplacianG=myNLaplacianG(Xdata,myedges,myedgeweight)
+  mynormLaplacianG=myNLaplacianG(Xdata=Xdata,myedges=myedges,myedgeweight=myedgeweight)
   myTauvec=sidanettunerange(Xdata,Y,ngrid,standardize,weight,eta,myedges,myedgeweight,withCov)
 
   #define the grid
   mygrid=expand.grid(do.call(cbind,myTauvec))
   gridcomb=dim(mygrid)[1]
   if(gridMethod=='RandomSearch'){
-    if(D==2){
+    if(Dnew<2){
+      ntrials=ngrid}
+      else if(Dnew==2){
       ntrials=floor(0.2*gridcomb)}
-      else if(D>2){
+      else if(Dnew>2){
         ntrials=floor(0.15*gridcomb)
       }
     mytune=sample(1:gridcomb, ntrials, replace = FALSE)
@@ -156,7 +158,8 @@ cvSIDANet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,wit
 
 
 #  start_time=Sys.time()
-  CVOut=matrix(0, nfolds, nrow(gridValues))
+  gridValues=as.matrix(gridValues)
+  CVOut=matrix(0, nfolds, nrow(as.matrix(gridValues)))
   #cross validation
 if(isParallel==TRUE){
   registerDoParallel()
@@ -247,4 +250,3 @@ if(isParallel==TRUE){
   result=list(CVOut=CVOut,sidaneterror=mysida$sidaneterror,sidanetcorrelation=sidanetcorrelation,hatalpha=mysida$hatalpha,PredictedClass=mysida$PredictedClass, optTau=moptTau,gridValues=gridValues, AssignClassMethod=AssignClassMethod, gridMethod=gridMethod)
   return(result)
 }
-

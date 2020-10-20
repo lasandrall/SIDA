@@ -60,7 +60,7 @@ sidanet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,Tau=T
   }
   
   if(is.null(mynormLaplacianG)){
-    mynormLaplacianG=myNLaplacianG(Xdata,myedges,myedgeweight)
+    mynormLaplacianG=myNLaplacianG(Xdata=Xdata,myedges=myedges,myedgeweight=myedgeweight)
   }
   
   if(is.null(eta)){
@@ -149,3 +149,4 @@ sidanet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,Tau=T
   return(result)
 
 }
+

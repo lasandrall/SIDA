@@ -84,7 +84,7 @@ myfastIDAnonsparse=function(Xdata, Y,weight){
     sqrtminvmat[[d]]=sqrtminv;
 
     
-    myeigen=eigs_sym(sqrtminv%*%Sbrx%*%sqrtminv,nc-1,which="LM")
+    myeigen=Re(eigs(sqrtminv%*%Sbrx%*%sqrtminv,nc-1))
     #myeigen=eigen(sqrtminv%*%Sbrx%*%sqrtminv,symmetric=TRUE)
     
     myalphaold1[[1]]=Ux1%*%myeigen$vectors
@@ -107,7 +107,7 @@ myfastIDAnonsparse=function(Xdata, Y,weight){
       rSumassociation=rSumassociation + rassociation + t(rassociation);
     }
     #solution to integrative LDA
-    myinteig=eigs_sym( sqrtminvmat[[d]]%*%( w1*Sbx[[d]] +  w2*rSumassociation)%*%sqrtminvmat[[d]],nc-1,which="LM");
+    myinteig=Re(eigs( sqrtminvmat[[d]]%*%( w1*Sbx[[d]] +  w2*rSumassociation)%*%sqrtminvmat[[d]],nc-1));
     #myinteig=eigen(sqrtminvmat[[d]]%*%( w1*Sbx[[d]] +  w2*rSumassociation)%*%sqrtminvmat[[d]],symmetric=TRUE)
     myalphaold2[[1]]=myinteig$vectors
     tildealphamat[[d]]=do.call(rbind,lapply(myalphaold2, function(x) x/norm(x,'2')))
@@ -250,7 +250,7 @@ sidainner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,wei
 
   for(d in 1:D){
     p=dim(Xdata[[d]])[2]
-
+    print(d)
     ##solve for SIDA directions
      Alphai=Variable(p,nK)
      Objx=sum(norm2(Alphai,axis=1))
@@ -356,7 +356,8 @@ sidanetinner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,
   return(result)
 }
 
-myNLaplacianG=function(Xdata,myedges,myedgeweight){
+
+myNLaplacianG=function(Xdata=Xdata,myedges=myedges,myedgeweight=myedgeweight){
   myL=list()
   D = length(Xdata)
   for(d in 1:D){
@@ -367,18 +368,41 @@ myNLaplacianG=function(Xdata,myedges,myedgeweight){
       edgeNode=unique(c(as.matrix(edgesd)))
       edgeweightd=myedgeweight[[d]]
       
-      #create undirected graph from edge list
-      G=graph_from_edgelist(edgesd, directed=FALSE)
-      L2=Matrix(0, nrow=p,ncol=p,sparse=TRUE)
-      
       #calculate normalized laplacian of the weighted or unweighted graph
       if(max(edgeweightd)!=0){
-        nL=laplacian_matrix(G, normalized=TRUE, weights=edgeweightd, sparse=igraph_opt("sparsematrices"))
-      }else if(max(edgeweightd)==0){
-        nL=laplacian_matrix(G, normalized=TRUE, weights=NULL,sparse=igraph_opt("sparsematrices"))
+        #Laplacian of weighted graph
+        WeightM=Matrix(0, nrow=p,ncol=p,sparse=TRUE)
+        for(j in 1:dim(edgesd)[1]){
+          indI=edgesd[j,1]
+          indJ=edgesd[j,2]
+          WeightM[indI, indJ]=edgeweightd[j]
+          WeightM[indJ, indI]=edgeweightd[j]
+        }
+        Dv=rowSums(WeightM)
+        L=diag(Dv)-WeightM
+        notZero=Dv!=0
+        Dv2=Matrix(0, nrow=length(Dv),ncol=1)
+        Dv2[notZero]=(Dv[Dv!=0])^(-0.5)
+        Dv3=diag(as.vector(Dv2),nrow = length(Dv2))
+        #nL=Dv3%*%L%*%Dv3
+        myL[[d]]=Dv3%*%L%*%Dv3
+        }else if(max(edgeweightd)==0){
+        #unweighted graph
+        AdjM=Matrix(0, nrow=p,ncol=p,sparse=TRUE)
+        for(j in 1:dim(edgesd)[1]){
+          indI=edgesd[j,1]
+          indJ=edgesd[j,2]
+          AdjM[indI, indJ]=1
+          AdjM[indJ, indI]=1
+        }
+        Dv=rowSums(AdjM)
+        L=diag(Dv)-AdjM
+        notZero=Dv!=0
+        Dv2=Matrix(0, nrow=length(Dv),ncol=1)
+        Dv2[notZero]=(Dv[Dv!=0])^(-0.5)
+        Dv3=diag(as.vector(Dv2),nrow = length(Dv2))
+        myL[[d]]=Dv3%*%L%*%Dv3
       }
-      L2[edgeNode,edgeNode]=nL
-      myL[[d]]=Matrix(L2,sparse = TRUE)
     }else if(max(myedges[[d]])==0){
       myL[[d]]=Matrix(diag(rep(1,p)),sparse = TRUE)
     }
