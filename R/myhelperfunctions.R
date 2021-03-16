@@ -84,8 +84,9 @@ myfastIDAnonsparse=function(Xdata, Y,weight){
     sqrtminvmat[[d]]=sqrtminv;
 
     
-    myeigen=Re(eigs(sqrtminv%*%Sbrx%*%sqrtminv,nc-1))
+    #myeigen=Re(eigs(sqrtminv%*%Sbrx%*%sqrtminv,nc-1))
     #myeigen=eigen(sqrtminv%*%Sbrx%*%sqrtminv,symmetric=TRUE)
+    myeigen=eigs_sym(sqrtminv%*%Sbrx%*%sqrtminv,nc-1,which="LM")
     
     myalphaold1[[1]]=Ux1%*%myeigen$vectors
     myalphaoldmat[[d]]=do.call(rbind,lapply(myalphaold1, function(x) x/norm(x,'2')))
@@ -107,8 +108,9 @@ myfastIDAnonsparse=function(Xdata, Y,weight){
       rSumassociation=rSumassociation + rassociation + t(rassociation);
     }
     #solution to integrative LDA
-    myinteig=Re(eigs( sqrtminvmat[[d]]%*%( w1*Sbx[[d]] +  w2*rSumassociation)%*%sqrtminvmat[[d]],nc-1));
+    #myinteig=Re(eigs( sqrtminvmat[[d]]%*%( w1*Sbx[[d]] +  w2*rSumassociation)%*%sqrtminvmat[[d]],nc-1));
     #myinteig=eigen(sqrtminvmat[[d]]%*%( w1*Sbx[[d]] +  w2*rSumassociation)%*%sqrtminvmat[[d]],symmetric=TRUE)
+    myinteig=eigs_sym(sqrtminvmat[[d]]%*%( w1*Sbx[[d]] +  w2*rSumassociation)%*%sqrtminvmat[[d]],nc-1,which="LM")
     myalphaold2[[1]]=myinteig$vectors
     tildealphamat[[d]]=do.call(rbind,lapply(myalphaold2, function(x) x/norm(x,'2')))
     tildelambda[[d]]=myinteig$values
