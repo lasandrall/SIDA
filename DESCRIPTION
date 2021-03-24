@@ -11,9 +11,9 @@ Description: The SIDA package implements the SIDA and SIDANet algorithms for joi
     It uses the normalized Laplacian of a graph to smooth coefficients of predictor variables, thus encouraging selection of predictors that are connected and
     behave similarly.
 License: GPL (>=2.0)
-Imports: CVXR, doParallel, foreach, RSpectra,igraph, Matrix
+Imports: RSpectra,CVXR, foreach, foreach,igraph, Matrix
 Encoding: UTF-8
 LazyData: true
 NeedsCompilation: no
 Packaged: 2020-05-12 03:42:45 UTC; thierrychekouotekougang
-Depends: R (>= 3.4.0)
+Depends: R (>= 3.5.0)
