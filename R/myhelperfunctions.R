@@ -381,7 +381,8 @@ myNLaplacianG=function(Xdata=Xdata,myedges=myedges,myedgeweight=myedgeweight){
           WeightM[indJ, indI]=edgeweightd[j]
         }
         #print(dim(WeightM))
-        Dv=base::rowSums(WeightM)
+        #Dv=base::rowSums(WeightM)
+        Dv=apply(WeightM, 1, sum)
         L=diag(Dv)-WeightM
         notZero=Dv!=0
         Dv2=Matrix(0, nrow=length(Dv),ncol=1)
@@ -398,7 +399,8 @@ myNLaplacianG=function(Xdata=Xdata,myedges=myedges,myedgeweight=myedgeweight){
           AdjM[indI, indJ]=1
           AdjM[indJ, indI]=1
         }
-        Dv=base::rowSums(AdjM)
+        #Dv=base::rowSums(AdjM)
+        Dv=apply(AdjM, 1, sum)
         L=diag(Dv)-AdjM
         notZero=Dv!=0
         Dv2=Matrix(0, nrow=length(Dv),ncol=1)
