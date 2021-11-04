@@ -3,6 +3,7 @@ Sparse Integrative Discriminant Analysis for Multi-view Structured Data
 
 Sandra E. Safo, Eun Jeong Min, and Lillian Haine , Sparse Linear Discriminant Analysis
 for Multi-view Structured Data, Biometrics, 2021
+
 The SIDA package implements the SIDA and SIDANet algorithms for joint association and classification studies.  
 The algorithms consider the overall association between multi-view data, and the separation within each view when
 choosing discriminant vectors  that are associated and optimally separate subjects. 
