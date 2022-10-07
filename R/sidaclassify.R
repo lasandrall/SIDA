@@ -97,3 +97,4 @@ else if(AssignClassMethod=='Joint') {
 result=list(PredictedClass=Predclass, AssignClassMethod=AssignClassMethod)
 return(result)
 }
+

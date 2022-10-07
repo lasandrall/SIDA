@@ -126,7 +126,8 @@ cvSIDANet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,wit
 
 
   if(withCov==TRUE){
-    Dnew=D-1
+    #Dnew=D-1
+    Dnew=D
   }else if(withCov==FALSE){
     Dnew=D
   }
@@ -214,6 +215,9 @@ if(isParallel==TRUE){
   moptTau=sapply(1:D, function(i) list(t(gridValues[minEorrInd,][i])))
   mysida=sidanet(Xdata=Xdata,Y=Y,myedges,myedgeweight,Tau=moptTau,withCov,Xtestdata=Xtestdata,Ytest=Ytest,AssignClassMethod,plotIt=NULL,standardize,maxiteration,weight,thresh,eta,mynormLaplacianG)
 
+  #Apply on training data
+  mysidaTrain=sidanet(Xdata=Xdata,Y=Y,myedges,myedgeweight,Tau=moptTau,withCov,Xtestdata=Xdata,Ytest=Y,AssignClassMethod,plotIt=NULL,standardize,maxiteration,weight,thresh,eta,mynormLaplacianG)
+
 
   ss=list()
   #sum pairwise RV coefficients
@@ -237,6 +241,29 @@ if(isParallel==TRUE){
   }
 
   sidanetcorrelation=sum(do.call(rbind,ss))/D
+  
+  ss=list()
+  #sum pairwise RV coefficients for training data
+  for(d in 1:D){
+    dd=setdiff(seq(1, D, by= 1),d)
+    #correlations
+    sumCorr2=0;
+    for (jj in 1:length(dd)){
+      j=dd[jj];
+      X1=Xdata[[d]]%*%mysida$hatalpha[[d]]
+      X2=Xdata[[j]]%*%mysida$hatalpha[[j]]
+      X1=scale(X1, center=TRUE,scale=FALSE)
+      X2=scale(X2, center=TRUE,scale=FALSE)
+      X1X2=t(X1)%*%X2/dim(X1)[1]
+      X1X1=t(X1)%*%X1/dim(X1)[1]
+      X2X2=t(X2)%*%X2/dim(X2)[1]
+      sumcorr3=sum(diag(X1X2%*%t(X1X2)))/(sqrt(sum(diag(X1X1%*%X1X1)))*sqrt(sum(diag(X2X2%*%X2X2))))
+      sumCorr2=sumCorr2+sumcorr3
+    }
+    ss[[d]]=sumCorr2/length(dd)
+  }
+  
+  sidanetcorrelation.train=sum(do.call(rbind,ss))/D
 
   #Produce discriminant and correlation plot if plotIt=T
   if(plotIt==TRUE){
@@ -247,6 +274,7 @@ if(isParallel==TRUE){
     myCorrPlot=NULL
   }
 
-  result=list(CVOut=CVOut,sidaneterror=mysida$sidaneterror,sidanetcorrelation=sidanetcorrelation,hatalpha=mysida$hatalpha,PredictedClass=mysida$PredictedClass, optTau=moptTau,gridValues=gridValues, AssignClassMethod=AssignClassMethod, gridMethod=gridMethod)
+  result=list(CVOut=CVOut,sidaneterror=mysida$sidaneterror,sidanetcorrelation=sidanetcorrelation,sidaneterror.train=mysidaTrain$sidaneterror,sidanetcorrelation.train=sidanetcorrelation.train,
+              hatalpha=mysida$hatalpha,PredictedClass=mysida$PredictedClass, optTau=moptTau,gridValues=gridValues, AssignClassMethod=AssignClassMethod, gridMethod=gridMethod)
   return(result)
 }

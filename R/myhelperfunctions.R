@@ -230,7 +230,7 @@ mysqrtminv=function(W){
 
 sidainner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,weight,withCov){
 
-
+  #D = length(Xdata)
   #check data
   if (is.list(Xdata)) {
     D = length(Xdata)
@@ -240,7 +240,7 @@ sidainner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,wei
 
   #if withCov=TRUE, set tuning parameter as 0
   if(withCov==TRUE){
-    Tau[[D]]=0.00001
+    Tau[[D]]=0.0001
   }
 
   nK=length(unique(as.vector(Y))) -1
@@ -252,7 +252,7 @@ sidainner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,wei
 
   for(d in 1:D){
     p=dim(Xdata[[d]])[2]
-    print(d)
+    #print(d)
     ##solve for SIDA directions
      Alphai=Variable(p,nK)
      Objx=sum(norm2(Alphai,axis=1))
@@ -261,7 +261,18 @@ sidainner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,wei
     constraints=list(norm_inf(sum_entries(abs(as.matrix(myfastnslda$SepAndAssocd[[d]]) - Alphai%*%as.matrix(diag(tildelambda[[d]],nrow=length(tildelambda[[d]])))), axis=1 ))<= Tau[[d]])
     prob=Problem(Minimize(Objx),constraints)
     result=solve(prob,solver="ECOS")
-    alphai=result$getValue(Alphai)
+    #result=solve(prob)
+    
+    #check if there's solver error, if so return all zero solutions
+    #print(result$status)
+    if(result$status=="solver_error"){
+      #print(result$status)
+      alphai=matrix(0,nrow=p,ncol=nK)
+    }else{
+      alphai=result$getValue(Alphai)
+    }
+    # print(result$status)
+    # alphai=result$getValue(Alphai)
     alphai[abs(alphai) <=10^-5]=0
 
     if(sum(sum(abs(alphai)))==0){
@@ -291,7 +302,7 @@ sidanetinner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,
 
 
   if(withCov==TRUE){
-    Tau[[D]]=0.00001
+    Tau[[D]]=0.0001
   }
 
   if(is.null(mynormLaplacianG)){
@@ -324,7 +335,14 @@ sidanetinner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,
       constraints=list(norm_inf(sum_entries(abs(as.matrix(myfastnslda$SepAndAssocd[[d]]) - Alphai%*%as.matrix(diag(tildelambda[[d]],nrow=length(tildelambda[[d]])))), axis=1 ))<= Tau[[d]])
       prob=Problem(Minimize(Objx),constraints)
       result=solve(prob,solver="ECOS")
-      alphai=result$getValue(Alphai)
+      
+      if(result$status=="solver_error"){
+        alphai=matrix(0,nrow=p,ncol=nK)
+      }else{
+        alphai=result$getValue(Alphai)
+      }
+      
+      #alphai=result$getValue(Alphai)
       alphai[abs(alphai) <=10^-5]=0
     }else if(max(myedges[[d]])==0){
        #if edge information is not available, use SIDA
@@ -336,7 +354,13 @@ sidanetinner = function(Xdata,Y,sqrtminv,myalphaold,tildealpha, tildelambda,Tau,
       constraints=list(norm_inf(sum_entries(abs(as.matrix(myfastnslda$SepAndAssocd[[d]]) - Alphai%*%as.matrix(diag(tildelambda[[d]],nrow=length(tildelambda[[d]])))), axis=1 ))<= Tau[[d]])
       prob=Problem(Minimize(Objx),constraints)
       result=solve(prob,solver="ECOS")
-      alphai=result$getValue(Alphai)
+      
+      if(result$status=="solver_error"){
+        alphai=matrix(0,nrow=p,ncol=nK)
+      }else{
+        alphai=result$getValue(Alphai)
+      }
+      #alphai=result$getValue(Alphai)
       alphai[abs(alphai) <=10^-5]=0
 
     }

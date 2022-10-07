@@ -28,9 +28,9 @@ if(is.null(eta)){
    eta=1e-03
 }
 
-if(withCov==TRUE){
-  D=D-1
-}
+# if(withCov==TRUE){
+#   D=D-1
+# }
 
 nK=length(unique(as.vector(Y))) -1
 

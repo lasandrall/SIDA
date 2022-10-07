@@ -112,7 +112,8 @@ cvSIDA=function(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=
 
 
   if(withCov==TRUE){
-    Dnew=D-1
+    #Dnew=D-1
+    Dnew=D
   }else if(withCov==FALSE){
     Dnew=D
   }
@@ -127,9 +128,9 @@ cvSIDA=function(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=
   mygrid=expand.grid(do.call(cbind,myTauvec))
   gridcomb=dim(mygrid)[1]
   if(gridMethod=='RandomSearch'){
-    if(D==2){
+    if(Dnew<=2){
       ntrials=floor(0.2*gridcomb)}
-    else if(D>2){
+    else if(Dnew>2){
       ntrials=floor(0.15*gridcomb)
     }
     mytune=sample(1:gridcomb, ntrials, replace = FALSE)
@@ -138,9 +139,16 @@ cvSIDA=function(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=
     gridValues=mygrid
   }
 
+  gridValues=as.data.frame(gridValues)
 
-
-  CVOut=matrix(0, nfolds, nrow(gridValues))
+  # if(length(gridValues)==1){
+  #   nrows=1
+  # }else if(length(gridValues)>1){
+  #   nrows=dim(gridValues)[1]
+  # }
+  
+  nrows=dim(gridValues)[1]
+  CVOut=matrix(0, nfolds, nrows)
   #cross validation
   if(isParallel==TRUE){
       registerDoParallel()
@@ -149,24 +157,25 @@ cvSIDA=function(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=
        ncores=ceiling(ncores/2)}
        cl=makeCluster(ncores)
        registerDoParallel(cl)
-    CVOut=matrix(0, nrow(gridValues), nfolds)
-    mycv=foreach(i = 1:nrow(gridValues), .combine='rbind',.export=c('sida','sidainner','myfastinner','myfastIDAnonsparse','mysqrtminv','sidaclassify', 'sidatunerange','DiscriminantPlots','CorrelationPlots'),.packages=c('CVXR','RSpectra')) %dopar% {
-      mTau=sapply(1:D, function(itau) list(t(gridValues[,itau][i])))
+    CVOut=matrix(0, nrows, nfolds)
+    mycv=foreach(i = 1:nrows, .combine='rbind',.export=c('sida','sidainner','myfastinner','myfastIDAnonsparse','mysqrtminv','sidaclassify', 'sidatunerange','DiscriminantPlots','CorrelationPlots'),.packages=c('CVXR','RSpectra')) %dopar% {
+      mTau=sapply(1:Dnew, function(itau) list(t(gridValues[,itau][i])))
       #cat("Begin CV-fold", i, "\n")
       CVOut[i,]= sapply(1:nfolds, function(j){
+        cat("Begin CV-fold", i, "\n")
         testInd=which(foldid==j)
         testX=lapply(Xdata, function(x) x[testInd,])
         testY=Y[testInd]
         trainX=lapply(Xdata, function(x) x[-testInd,])
         trainY=Y[-testInd]
-        mysida=sida(trainX,trainY,mTau,withCov,Xtestdata=testX,testY,AssignClassMethod='Joint',standardize,maxiteration,weight,thresh)
+        mysida=sida(Xdata=trainX,Y=trainY,Tau=mTau,withCov,Xtestdata=testX,Ytest=testY,AssignClassMethod=AssignClassMethod,standardize=standardize,maxiteration=maxiteration,weight=weight,thresh=thresh)
         return(min(mysida$sidaerror))
       } )
     }
     CVOut=t(mycv)
     stopCluster(cl)
   }else if(isParallel==FALSE){
-    CVOut=matrix(0, nfolds, nrow(gridValues))
+    CVOut=matrix(0, nfolds, nrows)
     for (i in 1:nfolds){
       testInd=which(foldid==i)
       testX=lapply(Xdata, function(x) x[testInd,])
@@ -175,10 +184,10 @@ cvSIDA=function(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=
       trainY=Y[-testInd]
 
       cat("Begin CV-fold", i, "\n")
-      CVOut[i,]= sapply(1:nrow(gridValues), function(itau){
-        mTau=sapply(1:D, function(d) list(t(gridValues[itau,][d])))
-        mysida=sida(trainX,trainY,mTau,withCov,Xtestdata=testX,testY,AssignClassMethod='Joint',standardize,maxiteration,weight,thresh)
-
+      CVOut[i,]= sapply(1:nrows, function(itau){
+        mTau=sapply(1:Dnew, function(d) list(t(gridValues[itau,][d])))
+        mysida=sida(Xdata=trainX,Y=trainY,Tau=mTau,withCov,Xtestdata=testX,Ytest=testY,AssignClassMethod=AssignClassMethod,standardize=standardize,maxiteration=maxiteration,weight=weight,thresh=thresh)
+        #print(itau)
         return(min(mysida$sidaerror))
       } )
     }
@@ -190,12 +199,14 @@ cvSIDA=function(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=
   optTau=gridValues[ minEorrInd,]
 
   #Apply on testing data
-  moptTau=sapply(1:D, function(i) list(t(gridValues[minEorrInd,][i])))
-  mysida=sida(Xdata=Xdata,Y=Y,Tau=moptTau,withCov,Xtestdata=Xtestdata,Ytest=Ytest,AssignClassMethod='Joint',standardize,maxiteration,weight,thresh)
+  moptTau=sapply(1:Dnew, function(i) list(t(gridValues[minEorrInd,][i])))
+  mysida=sida(Xdata=Xdata,Y=Y,Tau=moptTau,withCov,Xtestdata=Xtestdata,Ytest=Ytest,AssignClassMethod,standardize,maxiteration,weight,thresh)
 
-
+  #Apply on training data
+  mysidaTrain=sida(Xdata=Xdata,Y=Y,Tau=moptTau,withCov,Xtestdata=Xdata,Ytest=Y,AssignClassMethod,standardize,maxiteration,weight,thresh)
+  
   ss=list()
-  #sum pairwise RV coefficients
+  #sum pairwise RV coefficients for testing data
   for(d in 1:D){
     dd=setdiff(seq(1, D, by= 1),d)
     #correlations
@@ -217,6 +228,29 @@ cvSIDA=function(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=
 
   sidacorrelation=sum(do.call(rbind,ss))/D
 
+  ss=list()
+  #sum pairwise RV coefficients for training data
+  for(d in 1:D){
+    dd=setdiff(seq(1, D, by= 1),d)
+    #correlations
+    sumCorr2=0;
+    for (jj in 1:length(dd)){
+      j=dd[jj];
+      X1=Xdata[[d]]%*%mysida$hatalpha[[d]]
+      X2=Xdata[[j]]%*%mysida$hatalpha[[j]]
+      X1=scale(X1, center=TRUE,scale=FALSE)
+      X2=scale(X2, center=TRUE,scale=FALSE)
+      X1X2=t(X1)%*%X2/dim(X1)[1]
+      X1X1=t(X1)%*%X1/dim(X1)[1]
+      X2X2=t(X2)%*%X2/dim(X2)[1]
+      sumcorr3=sum(diag(X1X2%*%t(X1X2)))/(sqrt(sum(diag(X1X1%*%X1X1)))*sqrt(sum(diag(X2X2%*%X2X2))))
+      sumCorr2=sumCorr2+sumcorr3
+    }
+    ss[[d]]=sumCorr2/length(dd)
+  }
+  
+  sidacorrelation.train=sum(do.call(rbind,ss))/D
+  
   #Produce discriminant and correlation plot if plotIt=T
   if(plotIt==TRUE){
   DiscriminantPlots(Xtestdata,Ytest,mysida$hatalpha)
@@ -225,7 +259,8 @@ cvSIDA=function(Xdata=Xdata,Y=Y,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=
     myDiscPlot=NULL
     myCorrPlot=NULL
   }
-  result=list(CVOut=CVOut,sidaerror=mysida$sidaerror,sidacorrelation=sidacorrelation,hatalpha=mysida$hatalpha,PredictedClass=mysida$PredictedClass, optTau=moptTau,gridValues=gridValues, AssignClassMethod=AssignClassMethod, gridMethod=gridMethod)
+  result=list(CVOut=CVOut,sidaerror=mysida$sidaerror,sidacorrelation=sidacorrelation,sidaerror.train=mysidaTrain$sidaerror,sidacorrelation.train=sidacorrelation.train,
+              hatalpha=mysida$hatalpha,PredictedClass=mysida$PredictedClass, optTau=moptTau,gridValues=gridValues, AssignClassMethod=AssignClassMethod, gridMethod=gridMethod)
+            
   return(result)
 }
-

@@ -1,4 +1,4 @@
-sidatunerange=function(Xdata=Xdata,Y=Y,ngrid=8,standardize=TRUE,weight=0.5,withCov=FALSE){
+sidatunerange=function(Xdata=Xdata,Y=Y,ngrid=8,standardize=TRUE,weight=0.5,withCov=TRUE){
 
 #check size of each data
 
@@ -23,9 +23,9 @@ if(is.null(weight)){
    weight=0.5
 }
 
-if(withCov==TRUE){
-  D=D-1
-}
+# if(withCov==TRUE){
+#   D=D-1
+# }
 
 nK=length(unique(as.vector(Y))) -1
 
@@ -54,7 +54,7 @@ for(d in 1:D){
   Taugrid[[d]]=seq(as.numeric(cc[d,1]),as.numeric(cc[d,2]),length.out=(ngrid+1))
 }
 
-# about 25% sparsity
+# up to 25% sparsity
 
 myperx=lapply(Taugrid, function(x) quantile(x[1:ngrid], c(.1, .15, .2, .25, .35, .45), type=5))#similar to matlab
 myperx2=do.call(rbind,myperx)
@@ -63,6 +63,7 @@ myperx2=do.call(rbind,myperx)
    myres=sidainner(Xdata,Y,mynsparse$sqrtminvmat,mynsparse$myalphaoldmat,mynsparse$tildealphamat, mynsparse$tildelambda,mTaux,weight,withCov)
    nnz=sapply(1:D, function(i) list(colSums(myres$hatalpha[[i]]!=0)/dsizes[[i]][2]))
    nnz=cbind(c(do.call(rbind,nnz)))
+   #print(nnz)
    if(all(nnz<=0.25)){
      break
    }
@@ -74,4 +75,5 @@ Tauvec=sapply(1:D, function(x) list(Tauvec[[x]][1:ngrid]))
 result=list(Tauvec=Tauvec)
 return(result)
 }
+
 
