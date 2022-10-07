@@ -159,6 +159,7 @@ cvSIDANet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,wit
 
 
 #  start_time=Sys.time()
+  counter=0
   gridValues=as.matrix(gridValues)
   CVOut=matrix(0, nfolds, nrow(as.matrix(gridValues)))
   #cross validation
@@ -174,12 +175,15 @@ if(isParallel==TRUE){
   mycv=foreach(i = 1:nrow(gridValues), .combine='rbind',.export=c('sidanet','sidanetinner','myfastinner','myfastIDAnonsparse','mysqrtminv','sidaclassify', 'sidanettunerange','DiscriminantPlots','CorrelationPlots'),.packages=c('CVXR','RSpectra','igraph','Matrix')) %dopar% {
     mTau=sapply(1:D, function(itau) list(t(gridValues[,itau][i])))
     start_time=Sys.time()
-    CVOut[i,]= sapply(1:nfolds, function(j){
+    CVOut[i,]= sapply(1:nfolds, function(j){ 
       testInd=which(foldid==j)
       testX=lapply(Xdata, function(x) x[testInd,])
       testY=Y[testInd]
       trainX=lapply(Xdata, function(x) x[-testInd,])
       trainY=Y[-testInd]
+      # counter=counter +1
+      # #cat("Begin CV-fold", j, "\n")
+      # print(paste("Begin CV-fold",1))
       mysida=sidanet(Xdata=trainX,Y=trainY,myedges,myedgeweight,Tau=mTau,withCov,Xtestdata=testX,Ytest=testY,AssignClassMethod,plotIt=NULL,standardize,maxiteration,weight,thresh,eta,mynormLaplacianG)
       return(min(mysida$sidaneterror))
     } )
