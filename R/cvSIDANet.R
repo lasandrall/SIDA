@@ -1,6 +1,6 @@
 cvSIDANet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,withCov=FALSE,plotIt=FALSE,Xtestdata=NULL,Ytest=NULL,isParallel=TRUE,ncores=NULL,gridMethod='RandomSearch',AssignClassMethod='Joint',nfolds=5,ngrid=8,standardize=TRUE,maxiteration=20, weight=0.5,thresh=1e-03,eta=0.5){
 
-
+  starttimeall=Sys.time()
   #check data
   if (is.list(Xdata)) {
     D = length(Xdata)
@@ -136,9 +136,14 @@ cvSIDANet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,wit
     ngrid=5
   }
 
+  starttimetune=Sys.time()
+  print('Getting tuning grid values')
   #calculate the normalized laplacian
   mynormLaplacianG=myNLaplacianG(Xdata=Xdata,myedges=myedges,myedgeweight=myedgeweight)
   myTauvec=sidanettunerange(Xdata,Y,ngrid,standardize,weight,eta,myedges,myedgeweight,withCov)
+  endtimetune=Sys.time()
+  print('Completed at time')
+  print(endtimetune-starttimetune)
 
   #define the grid
   mygrid=expand.grid(do.call(cbind,myTauvec))
@@ -159,11 +164,13 @@ cvSIDANet=function(Xdata=Xdata,Y=Y,myedges=myedges,myedgeweight=myedgeweight,wit
 
 
 #  start_time=Sys.time()
+  starttimeCV=Sys.time()
   counter=0
   gridValues=as.matrix(gridValues)
   CVOut=matrix(0, nfolds, nrow(as.matrix(gridValues)))
   #cross validation
 if(isParallel==TRUE){
+  cat("Begin", nfolds,"-folds cross-validation", "\n")
   registerDoParallel()
   if(is.null(ncores)){
     ncores=parallel::detectCores()
@@ -174,7 +181,7 @@ if(isParallel==TRUE){
   CVOut=matrix(0, nrow(gridValues), nfolds)
   mycv=foreach(i = 1:nrow(gridValues), .combine='rbind',.export=c('sidanet','sidanetinner','myfastinner','myfastIDAnonsparse','mysqrtminv','sidaclassify', 'sidanettunerange','DiscriminantPlots','CorrelationPlots'),.packages=c('CVXR','RSpectra','igraph','Matrix')) %dopar% {
     mTau=sapply(1:D, function(itau) list(t(gridValues[,itau][i])))
-    start_time=Sys.time()
+    #start_time=Sys.time()
     CVOut[i,]= sapply(1:nfolds, function(j){ 
       testInd=which(foldid==j)
       testX=lapply(Xdata, function(x) x[testInd,])
@@ -184,7 +191,7 @@ if(isParallel==TRUE){
       # counter=counter +1
       # #cat("Begin CV-fold", j, "\n")
       # print(paste("Begin CV-fold",1))
-      mysida=sidanet(Xdata=trainX,Y=trainY,myedges,myedgeweight,Tau=mTau,withCov,Xtestdata=testX,Ytest=testY,AssignClassMethod,plotIt=NULL,standardize,maxiteration,weight,thresh,eta,mynormLaplacianG)
+      mysida=sidanet(trainX,trainY,myedges,myedgeweight,mTau,withCov,Xtestdata=testX,Ytest=testY,AssignClassMethod,plotIt=NULL,standardize,maxiteration,weight,thresh,eta,mynormLaplacianG)
       return(min(mysida$sidaneterror))
     } )
   }
@@ -204,13 +211,17 @@ if(isParallel==TRUE){
     cat("Begin CV-fold", i, "\n")
     CVOut[i,]= sapply(1:nrow(gridValues), function(itau){
     mTau=sapply(1:D, function(d) list(t(gridValues[itau,][d])))
-    mysida=sidanet(Xdata=trainX,Y=trainY,myedges,myedgeweight,Tau=mTau,withCov,Xtestdata=testX,Ytest=testY,AssignClassMethod,plotIt=NULL,standardize,maxiteration,weight,thresh,eta,mynormLaplacianG)
+    mysida=sidanet(trainX,trainY,myedges,myedgeweight,mTau,withCov,Xtestdata=testX,Ytest=testY,AssignClassMethod,plotIt=NULL,standardize,maxiteration,weight,thresh,eta,mynormLaplacianG)
       return(min(mysida$sidaneterror))
      } )
   }
 }
+  endtimeCV=Sys.time()
+  print('Cross-validation completed at time')
+  print(endtimeCV-starttimeCV) 
+  
 
-
+  print('Getting Results......')
   #compute average classification error
   minEorrInd=max(which(colMeans(CVOut)==min(colMeans(CVOut))))
   optTau=gridValues[ minEorrInd,]
@@ -276,8 +287,26 @@ if(isParallel==TRUE){
   }else{
     myDiscPlot=NULL
     myCorrPlot=NULL
+    
   }
+  
+  #print out some results
+  cat("Estimated Test Classification Error is", mysida$sidaneterror, "\n")
+  cat("Estimated Train Classification Error is", mysidaTrain$sidaneterror, "\n")
+  
+  cat("Estimated Test Correlation is", sidanetcorrelation, "\n")
+  cat("Estimated Train Correlation is", sidanetcorrelation.train, "\n")
+  
+  for(d in 1:D){
+    cat("Number of nonzero coefficients in view", d, "is", sum(mysida$hatalpha[[d]]!=0), "\n")
+  }
+  
 
+  endtimeall=Sys.time()
+  print("Total time used is")
+  print(endtimeall-starttimeall)
+
+  
   result=list(CVOut=CVOut,sidaneterror=mysida$sidaneterror,sidanetcorrelation=sidanetcorrelation,sidaneterror.train=mysidaTrain$sidaneterror,sidanetcorrelation.train=sidanetcorrelation.train,
               hatalpha=mysida$hatalpha,PredictedClass=mysida$PredictedClass, optTau=moptTau,gridValues=gridValues, AssignClassMethod=AssignClassMethod, gridMethod=gridMethod)
   return(result)

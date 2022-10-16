@@ -1,29 +1,29 @@
 myfastIDAnonsparse=function(Xdata, Y,weight){
-
-
+  
+  
   #   %--------------------------------------------------------------------------
   #   %myfastIDAnonsparse.R: function to obtain nonsparse solution to integrative lda problem
   # %and to obtain matrix needed in constraints
   # %--------------------------------------------------------------------------
   #
   #
-
+  
   #check data
   if (is.list(Xdata)) {
     D = length(Xdata)
   } else {
     stop("Input data should be a list")
   }
-
-
+  
+  
   #define weights
   w1=weight;
   w2=2*(1-weight)/(D*(D-1))
-
+  
   Y=as.vector(Y)
-
+  
   nc=max(unique(as.vector(Y)))
-
+  
   Crxd=list()
   Sbx=list()
   myalphaold1=list()
@@ -33,68 +33,98 @@ myfastIDAnonsparse=function(Xdata, Y,weight){
   sqrtminvmat=list()
   tildealphamat=list()
   tildelambda=list()
-
+  
   for (d in 1:D){
     myX=as.matrix(Xdata[[d]])
     n=dim(myX)[1]
     p=dim(myX)[2]
-    mysvd=svd(t(myX));
-    Ux1=mysvd$u;
-    V=mysvd$v;
-    W=diag(mysvd$d)
-    R=W%*%t(V)
-
-    rdata2=cbind(Y,t(R))
-    rdata=t(rdata2)
-    mrd=aggregate(rdata2[,-1],list(rdata2[,1]),mean)
-    mr=rowMeans(rdata[-1,])
-
-    nc=max(unique(Y))
-    C=list()
-    for(i in 1:nc)
-    {
-      C[[i]]=rdata2[rdata2[,1]==i,-1] - matrix(rep(t(mrd[mrd[,1]==i,-1]),times=sum(Y==i)) ,ncol=ncol(rdata2[,-1]),byrow=TRUE)
-    }
-    C=as.matrix(do.call(rbind,C))
-    Swrx=t(C)%*%C /(n-1)
-
-    #Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
-    Crx=R-rowMeans(R)
-    Srx=Crx%*%t(Crx)/(n-1)
-
-    Sbrx=Srx-Swrx
-    Sbrx=Sbrx + t(Sbrx)
-    Sbx[[d]]=Sbrx
-
-    lambda=sqrt(log(p)/n)
+    
+    myX=t(myX)
+    
+    #if n is less than p, project into n space 
     if(n<p){
+      mysvd=svd(myX);
+      Ux1=mysvd$u;
+      V=mysvd$v;
+      W=diag(mysvd$d)
+      R=W%*%t(V)
+      
+      rdata2=cbind(Y,t(R))
+      rdata=t(rdata2)
+      mrd=aggregate(rdata2[,-1],list(rdata2[,1]),mean)
+      mr=rowMeans(rdata[-1,])
+      
+      nc=max(unique(Y))
+      C=list()
+      for(i in 1:nc)
+      {
+        C[[i]]=rdata2[rdata2[,1]==i,-1] - matrix(rep(t(mrd[mrd[,1]==i,-1]),times=sum(Y==i)) ,ncol=ncol(rdata2[,-1]),byrow=TRUE)
+      }
+      C=as.matrix(do.call(rbind,C))
+      Swrx=t(C)%*%C /(n-1)
+      
+      #Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
+      Crx=R-rowMeans(R)
+      Srx=Crx%*%t(Crx)/(n-1)
+      
+      Sbrx=Srx-Swrx
+      Sbrx=Sbrx + t(Sbrx)
+      Sbx[[d]]=Sbrx
+      lambda=sqrt(log(p)/n)
       Strx=Swrx + lambda*diag(n)
       Strx=Strx + t(Strx)
-
-    } else if(n >= p){
-      Strx=Swrx
+    }else{
+      #work in p space
+      R=t(myX)
+      rdata2=cbind((as.data.frame(Y)[,1]),R)
+      rdata=t(rdata2)
+      mrd=aggregate(rdata2[,-1],list(rdata2[,1]),mean)
+      mr=rowMeans(rdata[-1,])
+      
+      nc=max(unique(Y))
+      C=list()
+      for(i in 1:nc)
+      {
+        C[[i]]=rdata2[rdata2[,1]==i,-1] - matrix(rep(t(mrd[mrd[,1]==i,-1]),times=sum(Y==i)) ,ncol=ncol(rdata2[,-1]),byrow=TRUE)
+      }
+      C=as.matrix(do.call(rbind,C))
+      Swrx=t(C)%*%(C) /(n-1)
+      
+      #Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
+      Crx=(t(R)-matrix(rep(colMeans(R),n),nrow=dim(R)[2],ncol=dim(R)[1]))
+      Srx=(Crx)%*%t(Crx)/(n-1)
+      
+      Sbrx=Srx-Swrx
+      Sbrx=Sbrx + t(Sbrx)
+      Sbx[[d]]=Sbrx
+      lambda=sqrt(log(p)/n)
+      Strx=Swrx + lambda*diag(p)
       Strx=Strx + t(Strx)
+      
     }
-
+    
+    
+    
     Crxd[[d]]=Crx;
-
+    
     #Set mybetaold and myalphaold as LDA solutions
-
+    
     sqrtminv= mysqrtminv(Strx)$sqrtminv;
     sqrtminvmat[[d]]=sqrtminv;
-
+    
     
     #myeigen=Re(eigs(sqrtminv%*%Sbrx%*%sqrtminv,nc-1))
     #myeigen=eigen(sqrtminv%*%Sbrx%*%sqrtminv,symmetric=TRUE)
     myeigen=eigs_sym(sqrtminv%*%Sbrx%*%sqrtminv,nc-1,which="LM")
-    
-    myalphaold1[[1]]=Ux1%*%myeigen$vectors
+    if(n < p){
+      myalphaold1[[1]]=Ux1%*%myeigen$vectors
+    }else{
+      myalphaold1[[1]]=myeigen$vectors
+    }
     myalphaoldmat[[d]]=do.call(rbind,lapply(myalphaold1, function(x) x/norm(x,'2')))
     rmyalphaoldmat[[d]]=myeigen$vectors
   }
-
-
-
+  
   #nonsparse solution to integrative LDA
   for(d in 1:D){
     dd=setdiff(seq(1, D, by= 1),d)
@@ -115,87 +145,125 @@ myfastIDAnonsparse=function(Xdata, Y,weight){
     tildealphamat[[d]]=do.call(rbind,lapply(myalphaold2, function(x) x/norm(x,'2')))
     tildelambda[[d]]=myinteig$values
   }
-
+  
   result=list(tildealphamat=tildealphamat,tildelambda=tildelambda, myalphaoldmat=myalphaoldmat,sqrtminvmat=sqrtminvmat);
   return(result)
-
-
+  
+  
 }
 
-myfastinner = function(Xdata,Y,sqrtminv,myalphaoldmat,tildealphamat, weight=0.5){
 
+myfastinner = function(Xdata,Y,sqrtminv,myalphaoldmat,tildealphamat, weight=0.5){
+  
   #check data
   if (is.list(Xdata)) {
     D = length(Xdata)
   } else {
     stop("Input data should be a list")
   }
-
-
+  
+  
   #define weights
   w1=weight;
   w2=2*(1-weight)/(D*(D-1))
-
+  
   Y=as.vector(Y)
-
+  
   separationd=list()
   associationd=list()
   SepAndAssoc=list()
   SepAndAssocd=list()
   Crxd=list()
   Ux=list()
-
+  
   for (d in 1:D){
     myX=as.matrix(Xdata[[d]])
     n=dim(myX)[1]
     p=dim(myX)[2]
-    mysvd=svd(t(myX));
-    Ux1=mysvd$u;
-    V=mysvd$v;
-    W=diag(mysvd$d)
-    R=W%*%t(V)
-    rdata2=cbind(Y,t(R))
-    rdata=t(rdata2)
-    mrd=aggregate(rdata2[,-1],list(rdata2[,1]),mean)
-    mr=rowMeans(rdata[-1,])
-
-    nc=length(unique(as.vector(Y)))
-    C=list()
-    for(i in 1:nc)
-    {
-      C[[i]]=rdata2[rdata2[,1]==i,-1] - matrix(rep(t(mrd[mrd[,1]==i,-1]),times=sum(Y==i)) ,ncol=ncol(rdata2[,-1]),byrow=TRUE)
-    }
-    C=as.matrix(do.call(rbind,C))
-    Swrx=t(C)%*%C /(n-1)
-
-    #Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
-    Crx=R-rowMeans(R)
-    Srx=Crx%*%t(Crx)/(n-1)
-
-    Sbrx=Srx-Swrx
-    Sbrx=Sbrx + t(Sbrx)
-    #Sbx[[d]]=Sbrx
-
-    lambda=sqrt(log(p)/n)
+    
+    myX=t(myX)
+    
+    #if n is less than p, project into n space 
     if(n<p){
+      mysvd=svd(myX);
+      Ux1=mysvd$u;
+      V=mysvd$v;
+      W=diag(mysvd$d)
+      R=W%*%t(V)
+      
+      rdata2=cbind(Y,t(R))
+      rdata=t(rdata2)
+      mrd=aggregate(rdata2[,-1],list(rdata2[,1]),mean)
+      mr=rowMeans(rdata[-1,])
+      
+      nc=max(unique(Y))
+      C=list()
+      for(i in 1:nc)
+      {
+        C[[i]]=rdata2[rdata2[,1]==i,-1] - matrix(rep(t(mrd[mrd[,1]==i,-1]),times=sum(Y==i)) ,ncol=ncol(rdata2[,-1]),byrow=TRUE)
+      }
+      C=as.matrix(do.call(rbind,C))
+      Swrx=t(C)%*%C /(n-1)
+      
+      #Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
+      Crx=R-rowMeans(R)
+      Srx=Crx%*%t(Crx)/(n-1)
+      
+      Sbrx=Srx-Swrx
+      Sbrx=Sbrx + t(Sbrx)
+      #Sbx[[d]]=Sbrx
+      lambda=sqrt(log(p)/n)
       Strx=Swrx + lambda*diag(n)
       Strx=Strx + t(Strx)
-
-    } else if(n >= p){
-      Strx=Swrx
+      
+      Ux[[d]]=Ux1
+      sqrtminvStrx = sqrtminv[[d]]
+      
+      separationd[[d]]=w1*Ux1%*%sqrtminvStrx%*%Sbrx%*%sqrtminvStrx%*%tildealphamat[[d]]
+      
+    }else{
+      #work in p space
+      R=t(myX)
+      rdata2=cbind((as.data.frame(Y)[,1]),R)
+      rdata=t(rdata2)
+      mrd=aggregate(rdata2[,-1],list(rdata2[,1]),mean)
+      mr=rowMeans(rdata[-1,])
+      
+      nc=max(unique(Y))
+      C=list()
+      for(i in 1:nc)
+      {
+        C[[i]]=rdata2[rdata2[,1]==i,-1] - matrix(rep(t(mrd[mrd[,1]==i,-1]),times=sum(Y==i)) ,ncol=ncol(rdata2[,-1]),byrow=TRUE)
+      }
+      C=as.matrix(do.call(rbind,C))
+      Swrx=t(C)%*%(C) /(n-1)
+      
+      #Crx=R-t(matrix(rep(mr,times=n),ncol=ncol(R),byrow=TRUE))
+      Crx=(t(R)-matrix(rep(colMeans(R),n),nrow=dim(R)[2],ncol=dim(R)[1]))
+      Srx=(Crx)%*%t(Crx)/(n-1)
+      
+      Sbrx=Srx-Swrx
+      Sbrx=Sbrx + t(Sbrx)
+      # Sbx[[d]]=Sbrx
+      lambda=sqrt(log(p)/n)
+      Strx=Swrx + lambda*diag(p)
       Strx=Strx + t(Strx)
+      
+      Ux[[d]]=0
+      sqrtminvStrx = sqrtminv[[d]]
+      
+      separationd[[d]]=w1*sqrtminvStrx%*%Sbrx%*%sqrtminvStrx%*%tildealphamat[[d]]
     }
-
-    Ux[[d]]=Ux1;
-    Crxd[[d]]=Crx;
-    sqrtminvStrx = sqrtminv[[d]]
     
-    separationd[[d]]=w1*Ux1%*%sqrtminvStrx%*%Sbrx%*%sqrtminvStrx%*%tildealphamat[[d]]
+    
+    
+    Crxd[[d]]=Crx;
+    
   }
-
-
+  
+  
   #obtain association matrices
-
+  
   for(d in 1:D){
     dd=setdiff(seq(1, D, by= 1),d)
     #cross-covariance
@@ -203,20 +271,29 @@ myfastinner = function(Xdata,Y,sqrtminv,myalphaoldmat,tildealphamat, weight=0.5)
     for (jj in 1:length(dd)){
       j=dd[jj];
       myalphaold=myalphaoldmat[[j]]
-      Sdj=Crxd[[d]]%*%t(Crxd[[j]])
-      assoc2=(Sdj%*%t(Ux[[j]])%*%(myalphaold%*%t(myalphaold))%*%Ux[[j]]%*%t(Sdj));
-      association=Ux[[d]]%*%sqrtminv[[d]]%*%(assoc2+t(assoc2))%*%(t(Ux[[d]])%*%Ux[[d]])%*%sqrtminv[[d]]%*%tildealphamat[[d]]/((n-1)^2);
-      Sumassociation=Sumassociation + association ;
+      
+      if(n < p){
+        Sdj=Crxd[[d]]%*%t(Crxd[[j]])
+        assoc2=(Sdj%*%t(Ux[[j]])%*%(myalphaold%*%t(myalphaold))%*%Ux[[j]]%*%t(Sdj));
+        association=Ux[[d]]%*%sqrtminv[[d]]%*%(assoc2+t(assoc2))%*%(t(Ux[[d]])%*%Ux[[d]])%*%sqrtminv[[d]]%*%tildealphamat[[d]]/((n-1)^2);
+        Sumassociation=Sumassociation + association ;
+      }else{
+        Sdj=Crxd[[d]]%*%t(Crxd[[j]])
+        assoc2=(Sdj%*%(myalphaold%*%t(myalphaold))%*%t(Sdj));
+        association=sqrtminv[[d]]%*%(assoc2+t(assoc2))%*%sqrtminv[[d]]%*%tildealphamat[[d]];
+        Sumassociation=Sumassociation + association ;
+      }
     }
-
+    
     SepAndAssoc[[1]]=separationd[[d]]+ w2*Sumassociation;
     SepAndAssoc2=lapply(SepAndAssoc, function(x) x/norm(x,'i'));
     SepAndAssocd[[d]]= do.call(rbind,SepAndAssoc2)
-
+    
   }
-
+  
   result=list(SepAndAssocd=SepAndAssocd, Ux=Ux);
   return(result)
+  #Sandra E. Safo
 }
 
 mysqrtminv=function(W){
