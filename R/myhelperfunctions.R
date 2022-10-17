@@ -271,18 +271,19 @@ myfastinner = function(Xdata,Y,sqrtminv,myalphaoldmat,tildealphamat, weight=0.5)
     for (jj in 1:length(dd)){
       j=dd[jj];
       myalphaold=myalphaoldmat[[j]]
-      
-      if(n < p){
-        Sdj=Crxd[[d]]%*%t(Crxd[[j]])
-        assoc2=(Sdj%*%t(Ux[[j]])%*%(myalphaold%*%t(myalphaold))%*%Ux[[j]]%*%t(Sdj));
-        association=Ux[[d]]%*%sqrtminv[[d]]%*%(assoc2+t(assoc2))%*%(t(Ux[[d]])%*%Ux[[d]])%*%sqrtminv[[d]]%*%tildealphamat[[d]]/((n-1)^2);
-        Sumassociation=Sumassociation + association ;
+      Sdj=Crxd[[d]]%*%t(Crxd[[j]])
+      if(is.null(dim(Ux[[j]]))){
+        assoc2=(Sdj%*%(myalphaold%*%t(myalphaold)))%*%t(Sdj);
       }else{
-        Sdj=Crxd[[d]]%*%t(Crxd[[j]])
-        assoc2=(Sdj%*%(myalphaold%*%t(myalphaold))%*%t(Sdj));
-        association=sqrtminv[[d]]%*%(assoc2+t(assoc2))%*%sqrtminv[[d]]%*%tildealphamat[[d]];
-        Sumassociation=Sumassociation + association ;
+        assoc2=(Sdj%*%t(Ux[[j]])%*%(myalphaold%*%t(myalphaold)))%*%Ux[[j]]%*%t(Sdj);
       }
+      
+      if(is.null(dim(Ux[[d]]))){
+        association=(sqrtminv[[d]]%*%(assoc2+t(assoc2))%*%sqrtminv[[d]])%*%tildealphamat[[d]];
+      }else{
+        association=(Ux[[d]]%*%sqrtminv[[d]]%*%(assoc2+t(assoc2)))%*%(t(Ux[[d]])%*%Ux[[d]])%*%sqrtminv[[d]]%*%tildealphamat[[d]]/((n-1)^2);
+      }
+           Sumassociation=Sumassociation + association ;
     }
     
     SepAndAssoc[[1]]=separationd[[d]]+ w2*Sumassociation;
